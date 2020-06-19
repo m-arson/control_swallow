@@ -25,8 +25,8 @@ struct Tresholds {
 } treshold;
 
 struct Addrs {
-  uint8_t temp = 0;
-  uint8_t hum = 1;
+  uint8_t temp = 21;
+  uint8_t hum = 22;
 } addr;
 
 uint64_t last_millis = 0;
@@ -63,8 +63,14 @@ void setup() {
   Serial.begin(9600);
   lcd.begin(16, 2);
   dht.begin();
-  treshold.temp = EEPROM.read(addr.temp);
-  treshold.hum = EEPROM.read(addr.hum);
+  if (EEPROM.read(addr.temp) == 0 || EEPROM.read(addr.temp) > 100 || EEPROM.read(addr.hum) == 0 || EEPROM.read(addr.hum) > 100) {
+    EEPROM.update(addr.temp, treshold.temp);
+    EEPROM.update(addr.hum, treshold.hum);
+  }
+  else {
+    treshold.temp = EEPROM.read(addr.temp);
+    treshold.hum = EEPROM.read(addr.hum);
+  }
   for (uint8_t i = 2; i < 7; i++) {
     pinMode(i, INPUT_PULLUP);
   }
@@ -80,19 +86,19 @@ void loop() {
     lcd.print("Temp : ");
     float t = dht.readTemperature();
     float h = dht.readHumidity();
-    if(t > treshold.temp) {
+    if (t > treshold.temp) {
       digitalWrite(relay.cooler, LOW);
     }
     else {
       digitalWrite(relay.cooler, HIGH);
     }
-    if(h < treshold.hum) {
+    if (h < treshold.hum) {
       digitalWrite(relay.mist_maker, LOW);
     }
     else {
       digitalWrite(relay.mist_maker, HIGH);
     }
-    
+
     lcd.print(t);
     lcd.print(' ');
     lcd.print((char) 223);
@@ -107,7 +113,7 @@ void loop() {
     lcd.clear();
     delay(250);
     while (true) {
-      if(to_break == 1) {
+      if (to_break == 1) {
         to_break = 0;
         return;
       }
